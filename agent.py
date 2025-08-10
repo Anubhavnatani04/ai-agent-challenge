@@ -22,8 +22,7 @@ def repo_context(target: str):
         "present_files": file_tree_snapshot(root),
         "existing_contents": read_existing_files([
             root / f"custom_parsers/{target}_parser.py",
-            root / f"tests/test_{target}.py",
-            root / "README.md",
+            root / f"tests/test_{target}.py"
         ]),
     }
 
@@ -31,7 +30,6 @@ def file_tree_snapshot(root: Path):
     out = []
     for p in root.rglob("*"):
         if p.is_file():
-            # Skip virtualenvs / large dirs
             if any(seg in p.parts for seg in [".venv", "venv", "__pycache__", ".git"]):
                 continue
             rel = str(p.relative_to(root))
@@ -50,7 +48,6 @@ def read_existing_files(paths):
     return result
 
 def apply_patches(patches: list, root: Path):
-    # patches is a list of objects
     for patch in patches:
         rel = patch.get("path")
         content = patch.get("content", "")
@@ -61,7 +58,6 @@ def apply_patches(patches: list, root: Path):
         dest.write_text(content, encoding="utf-8")
 
 def run_pytest_subprocess(root: Path):
-    # Run tests in a clean subprocess
     cmd = [sys.executable, "-m", "pytest", *PYTEST_ARGS]
     proc = subprocess.Popen(
         cmd, cwd=str(root),
@@ -71,9 +67,7 @@ def run_pytest_subprocess(root: Path):
     return proc.returncode, out
 
 def llm_propose_patches(system_prompt: str, user_prompt: str, model: str = "openai/gpt-oss-120b"):
-    # Expect a JSON response
     client = Groq()
-    
     completion = client.chat.completions.create(
         model=model,
         messages=[
@@ -85,12 +79,10 @@ def llm_propose_patches(system_prompt: str, user_prompt: str, model: str = "open
         top_p=1,
         response_format={"type": "json_object"}
     )
-    
     content = completion.choices[0].message.content
     try:
         data = json.loads(content)
     except Exception:
-        # Fallback
         start = content.find("{")
         end = content.rfind("}")
         data = json.loads(content[start:end+1])
@@ -137,10 +129,6 @@ Produce JSON with:
     {{
       "path": "tests/test_{target}.py",
       "content": "<full file>"
-    }},
-    {{
-      "path": "README.md",
-      "content": "<append or full file>"
     }}
   ],
   "notes": "Short rationale of changes"
