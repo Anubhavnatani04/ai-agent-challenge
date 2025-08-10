@@ -1,2 +1,5 @@
 # ai-agent-challenge
-Coding agent challenge which write custom parsers for Bank statement PDF.
+## Introduction
+This project aims to parse PDF statements from various banks.
+## Implemented Parsers
+* ICICI Bank: custom_parsers/icici_parser.py
